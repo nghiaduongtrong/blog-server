@@ -6,5 +6,5 @@ app.listen(PORT, (err) => {
     if (err) {
         console.log('blog server run error: ' + err);
     }
-    console.log('blog server running');
+    console.log('blog server is up and listening on port ' +  PORT);
 });
