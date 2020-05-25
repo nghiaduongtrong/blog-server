@@ -18,22 +18,6 @@ class Permission {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
-    /**
-    * Returns object permission
-    * @returns {object} permission
-    */
-    convert = () => {
-        return {
-            id = this.id,
-            title = this.title,
-            slug = this.slug,
-            description = this.description,
-            active = this.active,
-            created_at = this.createdAt,
-            updated_at = this.updatedAt
-        }
-    }
 }
 
 module.exports = Permission;

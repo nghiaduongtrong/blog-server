@@ -26,26 +26,6 @@ class User {
         this.registeredAt = registeredAt;
         this.lastLogin = lastLogin;
     }
-
-    /**
-    * Returns object user
-    * @returns {object} user
-    */
-    convert = () => {
-        return {
-            id = this.id,
-            role_id = this.roleId,
-            first_name = this.firstName,
-            middle_name = this.middleName,
-            last_name = this.lastName,
-            active = this.active,
-            mobile = this.mobile,
-            email = this.email,
-            password_hash = this.passwordHash,
-            registered_at = this.registeredAt,
-            last_login = this.lastLogin
-        }
-    }
 }
 
 module.exports = User;

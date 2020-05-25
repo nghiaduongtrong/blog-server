@@ -16,21 +16,6 @@ class Role {
         this.createdAt = createdAt; 
         this.updatedAt = updatedAt;
     }
-
-    /**
-    * Returns object role
-    * @returns {object} role
-    */
-    convert = () => {
-        return {
-            id = this.id,
-            title = this.title,
-            slug = this.slug, 
-            description = this.description,
-            created_at = this.createdAt,
-            updated_at = this.updated_at
-        }
-    }
 }
 
 module.exports = Role;
