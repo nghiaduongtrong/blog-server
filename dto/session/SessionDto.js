@@ -1,9 +1,11 @@
 class SessionDto {
+    id = Number();
     fullName = String();
     loginDate = Number();
 
     constructor() {
-        this.fullName = null,
+        this.id = null;
+        this.fullName = null;
         this.loginDate = null
     }
 }

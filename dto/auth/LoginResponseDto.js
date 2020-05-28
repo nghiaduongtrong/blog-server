@@ -1,6 +1,6 @@
 const SessionDto = require('../session/SessionDto');
 
-class LoginDto {
+class LoginResponseDto {
     accessToken = String();
     isSucceed = Boolean();
     messageType = String();
@@ -11,8 +11,9 @@ class LoginDto {
         this.accessToken = null,
         this.isSucceed = false,
         this.messageType = null,
-        this.message = null
+        this.message = null,
+        this.sessionDto = null
     }
 }
 
-module.exports = LoginDto;
+module.exports = LoginResponseDto;
