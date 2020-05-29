@@ -1,6 +1,7 @@
 const authRoutes = require('express').Router();
 const LoginConfigDto = require('../../dto/auth/LoginConfigDto');
 const LoginResponseDto = require('../../dto/auth/LoginResponseDto');
+const RefreshTokenResponseDto = require('../../dto/auth/RefreshTokenResponseDto');
 const UserDto = require('../../dto/auth/UserDto');
 const authConfig = require('../../config/auth/AuthConfig');
 const jwt = require('jsonwebtoken');
@@ -10,6 +11,7 @@ const AuthEventCenter = require('../../events/auth/AuthEventCenter');
 const authEventCenter = new AuthEventCenter();
 
 const authService = new AuthService();
+
 /** login
  * [POST] api/auth/login
  * @returns {LoginDto} response
@@ -29,20 +31,14 @@ authRoutes.post('/login', (req, res) => {
         user.id = response.sessionDto.id;
         user.fullName = response.sessionDto.fullName;
 
-        // đăng nhập thành công. tạo accessToken cho user.
-        const accessToken = jwt.sign(user.toJSON(), authConfig.accessTokenSecret, {
-            expiresIn: authConfig.accessTokenLife
-        });
         // tạo refresh token. lưu vào cookies
         const refreshToken = jwt.sign(user.toJSON(), authConfig.refreshTokenSecret, {
             expiresIn: authConfig.refreshTokenLife
         });
-        
+
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true
         });
-
-        response.accessToken = accessToken;
 
         res.json(response);
     }
@@ -51,6 +47,35 @@ authRoutes.post('/login', (req, res) => {
     authEventCenter.addListener(authEventCenter.DO_LOGIN_SUCCEED, doLoginSucceed);
 
     authService.login(dto);
+});
+
+/** refresh token 
+ * [POST] api/auth/refresh-token
+ * @returns {LoginDto} response
+ */
+authRoutes.post('/refresh-token', (req, res) => {
+    const { refreshToken } = req.cookies;
+
+    const refreshTokenError = (response = new RefreshTokenResponseDto()) => {
+        res.json(response);
+    }
+
+    const refreshTokenSucceed = (response = new RefreshTokenResponseDto()) => {
+        res.json(response);
+    }
+
+    authEventCenter.addListener(authEventCenter.REFRESH_TOKEN_ERROR, refreshTokenError);
+    authEventCenter.addListener(authEventCenter.REFRESH_TOKEN_SUCCEED, refreshTokenSucceed);
+    
+    authService.refreshToken(refreshToken);
+});
+
+/** logout 
+ * [POST] api/auth/logout
+ * @returns {} response
+ */
+authRoutes.post('/logout', (req, res) => {
+
 });
 
 module.exports = authRoutes;
