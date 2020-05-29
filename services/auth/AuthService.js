@@ -2,6 +2,7 @@ const LoginConfigDto = require('../../dto/auth/LoginConfigDto');
 const UserRepository = require('../../repository/UserRepository');
 const LoginResponseDto = require('../../dto/auth/LoginResponseDto');
 const RefreshTokenResponseDto = require('../../dto/auth/RefreshTokenResponseDto');
+const LogoutResponseDto = require('../../dto/auth/LogoutResponseDto');
 const UserDto = require('../../dto/auth/UserDto');
 const authConfig = require('../../config/auth/AuthConfig');
 const AuthEventCenter = require('../../events/auth/AuthEventCenter');
@@ -142,7 +143,7 @@ class AuthService {
                 const response = createErrorRefreshTokenResult(AuthMessage.REFRESH_TOKEN_NOT_FOUND);
                 authEventCenter.fireEvent(authEventCenter.REFRESH_TOKEN_ERROR, response);
                 return;
-            } 
+            }
             const user = jwt.verify(refreshToken, authConfig.refreshTokenSecret);
             const response = createSucceedRefreshTokenResult(user);
             authEventCenter.fireEvent(authEventCenter.REFRESH_TOKEN_SUCCEED, response);
@@ -152,6 +153,23 @@ class AuthService {
             const response = createErrorRefreshTokenResult(AuthMessage.ERROR);
             authEventCenter.fireEvent(authEventCenter.REFRESH_TOKEN_ERROR, response);
             return;
+        }
+    }
+
+    /**
+     * 
+     * @returns {LogoutResponseDto} response 
+     */
+    logout = () => {
+        try {
+            const response = new LogoutResponseDto();
+            response.isSucceed = true;
+            authEventCenter.fireEvent(authEventCenter.LOGOUT_SUCCEED, response);
+        } catch (err) {
+            console.log(err);
+            const response = new LogoutResponseDto();
+            response.isSucceed = false;
+            authEventCenter.fireEvent(authEventCenter.LOGOUT_ERROR, response);
         }
     }
 }

@@ -2,6 +2,7 @@ const authRoutes = require('express').Router();
 const LoginConfigDto = require('../../dto/auth/LoginConfigDto');
 const LoginResponseDto = require('../../dto/auth/LoginResponseDto');
 const RefreshTokenResponseDto = require('../../dto/auth/RefreshTokenResponseDto');
+const LogoutResponseDto = require('../../dto/auth/LogoutResponseDto');
 const UserDto = require('../../dto/auth/UserDto');
 const authConfig = require('../../config/auth/AuthConfig');
 const jwt = require('jsonwebtoken');
@@ -66,16 +67,28 @@ authRoutes.post('/refresh-token', (req, res) => {
 
     authEventCenter.addListener(authEventCenter.REFRESH_TOKEN_ERROR, refreshTokenError);
     authEventCenter.addListener(authEventCenter.REFRESH_TOKEN_SUCCEED, refreshTokenSucceed);
-    
+
     authService.refreshToken(refreshToken);
 });
 
 /** logout 
  * [POST] api/auth/logout
- * @returns {} response
+ * @returns {LogoutResponseDto} response
  */
 authRoutes.post('/logout', (req, res) => {
+    const logoutSucceed = (response = new LogoutResponseDto()) => {
+        res.clearCookie('refreshToken');
+        res.json(response);
+    }
 
+    const logoutError = (response = new LogoutResponseDto()) => {
+        res.json(response);
+    }
+
+    authEventCenter.addListener(authEventCenter.LOGOUT_SUCCEED, logoutSucceed);
+    authEventCenter.addListener(authEventCenter.LOGOUT_ERROR, logoutError);
+
+    authService.logout();
 });
 
 module.exports = authRoutes;
