@@ -1,8 +1,10 @@
 const authConfig = {
-    accessTokenSecret: 'access_token_secret',
-    accessTokenLife: '15m',
-    refreshTokenSecret: 'refresh_token_secret',
-    refreshTokenLife: '7d'
+    ACCESS_TOKEN_SECRET: 'access_token_secret',
+    ACCESS_TOKEN_LIFE: '15m',
+    REFRESH_TOKEN_SECRET: 'refresh_token_secret',
+    REFRESH_TOKEN_LIFE: '7d',
+
+    REFRESH_TOKEN_COOKIE_KEY: 'refreshToken'
 }
 
 module.exports = authConfig;

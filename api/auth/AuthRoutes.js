@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 const AuthService = require('../../services/auth/AuthService');
 const AuthEventCenter = require('../../events/auth/AuthEventCenter');
 
+const authenticate = require('../../middlewares/auth/Authenticate');
 const authEventCenter = new AuthEventCenter();
 
 const authService = new AuthService();
@@ -33,11 +34,11 @@ authRoutes.post('/login', (req, res) => {
         user.fullName = response.sessionDto.fullName;
 
         // tạo refresh token. lưu vào cookies
-        const refreshToken = jwt.sign(user.toJSON(), authConfig.refreshTokenSecret, {
-            expiresIn: authConfig.refreshTokenLife
+        const refreshToken = jwt.sign(user.toJSON(), authConfig.REFRESH_TOKEN_SECRET, {
+            expiresIn: authConfig.REFRESH_TOKEN_LIFE
         });
 
-        res.cookie('refreshToken', refreshToken, {
+        res.cookie(authConfig.REFRESH_TOKEN_COOKIE_KEY, refreshToken, {
             httpOnly: true
         });
 
@@ -77,7 +78,7 @@ authRoutes.post('/refresh-token', (req, res) => {
  */
 authRoutes.post('/logout', (req, res) => {
     const logoutSucceed = (response = new LogoutResponseDto()) => {
-        res.clearCookie('refreshToken');
+        res.clearCookie(authConfig.REFRESH_TOKEN_COOKIE_KEY);
         res.json(response);
     }
 

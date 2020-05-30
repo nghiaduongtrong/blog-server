@@ -11,6 +11,10 @@ const AuthMessageType = require('../../consts/auth/AuthMessageType');
 const AuthMessage = require('../../consts/auth/AuthMessage');
 const RoleType = require('../../consts/auth/RoleType');
 const jwt = require('jsonwebtoken');
+const AuthUtil = require('../../utils/auth/AuthUtil');
+
+
+const authUtil = new AuthUtil();
 
 const authEventCenter = new AuthEventCenter();
 
@@ -48,8 +52,8 @@ const createSucceedLoginResult = (user) => {
     userPayload.id = user.id;
     userPayload.fullName = [user.firstName, user.middleName, user.lastName].join(' ');
     // đăng nhập thành công. tạo accessToken cho user.
-    const accessToken = jwt.sign(userPayload.toJSON(), authConfig.accessTokenSecret, {
-        expiresIn: authConfig.accessTokenLife
+    const accessToken = jwt.sign(userPayload.toJSON(), authConfig.ACCESS_TOKEN_SECRET, {
+        expiresIn: authConfig.ACCESS_TOKEN_LIFE
     });
 
     response.accessToken = accessToken;
@@ -82,8 +86,8 @@ const createSucceedRefreshTokenResult = (user) => {
     userPayload.id = user.id;
     userPayload.fullName = user.fullName;
     // đăng nhập thành công. tạo accessToken cho user.
-    const accessToken = jwt.sign(userPayload.toJSON(), authConfig.accessTokenSecret, {
-        expiresIn: authConfig.accessTokenLife
+    const accessToken = jwt.sign(userPayload.toJSON(), authConfig.ACCESS_TOKEN_SECRET, {
+        expiresIn: authConfig.ACCESS_TOKEN_LIFE
     });
 
     response.accessToken = accessToken;
@@ -104,19 +108,13 @@ class AuthService {
                 authEventCenter.fireEvent(authEventCenter.DO_LOGIN_ERROR, response);
                 return;
             }
+            //TODO: bryct pass
             if (user.passwordHash !== config.password) {
                 const response = createErrorLoginResult(AuthMessage.WRONG_PASSWORD);
                 authEventCenter.fireEvent(authEventCenter.DO_LOGIN_ERROR, response);
                 return;
             }
-            const roles = await userRepository.getRole(user.id);
-            let isAdmin = false;
-            for (const role of roles) {
-                if (role.title === RoleType.ADMIN) {
-                    isAdmin = true;
-                    break;
-                }
-            }
+            const isAdmin = await authUtil.isUserInRole(user.id, RoleType.ADMIN);
             if (!isAdmin) {
                 const response = createErrorLoginResult(AuthMessage.NOT_AUTHORIZED);
                 authEventCenter.fireEvent(authEventCenter.DO_LOGIN_ERROR, response);
@@ -144,7 +142,7 @@ class AuthService {
                 authEventCenter.fireEvent(authEventCenter.REFRESH_TOKEN_ERROR, response);
                 return;
             }
-            const user = jwt.verify(refreshToken, authConfig.refreshTokenSecret);
+            const user = jwt.verify(refreshToken, authConfig.REFRESH_TOKEN_SECRET);
             const response = createSucceedRefreshTokenResult(user);
             authEventCenter.fireEvent(authEventCenter.REFRESH_TOKEN_SUCCEED, response);
             return;
