@@ -7,10 +7,6 @@ class AuthEventCenter extends BaseEvent{
     REFRESH_TOKEN_SUCCEED = 'refreshTokenSucceed';
     LOGOUT_SUCCEED = 'logoutSucceed';
     LOGOUT_ERROR = 'logoutError';
-
-    constructor() {
-        super();
-    }
 }
 
 module.exports = AuthEventCenter;

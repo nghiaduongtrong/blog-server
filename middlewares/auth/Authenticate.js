@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const authConfig = require('../../config/auth/AuthConfig');
 const AuthenticateResponseDto = require('../../dto/auth/AuthenticateResponseDto');
-const AuthMessageType = require('../../consts/auth/AuthMessageType');
+const MessageType = require('../../consts/MessageType');
 const AuthMessage = require('../../consts/auth/AuthMessage');
 const UserRepository = require('../../repository/UserRepository');
 const RoleType = require('../../consts/auth/RoleType');
@@ -14,7 +14,7 @@ const userRepository = new UserRepository();
 const createErrorAuthenticate = (message) => {
     const response = new AuthenticateResponseDto();
     response.isSucceed = false;
-    response.messageType = AuthMessageType.ERROR;
+    response.messageType = MessageType.ERROR;
     response.message = message;
 
     return response;

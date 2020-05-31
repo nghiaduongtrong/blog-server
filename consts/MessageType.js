@@ -1,6 +1,6 @@
-class AuthMessageType {
+class MessageType {
     static ERROR = 'error';
     static SUCCEED = 'succeed';
 }
 
-module.exports = AuthMessageType;
+module.exports = MessageType;
