@@ -7,8 +7,8 @@ const UserDto = require('../../dto/auth/UserDto');
 const authConfig = require('../../config/auth/AuthConfig');
 const AuthEventCenter = require('../../events/auth/AuthEventCenter');
 const SessionDto = require('../../dto/session/SessionDto');
-const AuthMessageType = require('../../consts/auth/AuthMessageType');
 const AuthMessage = require('../../consts/auth/AuthMessage');
+const MessageType = require('../../consts/MessageType');
 const RoleType = require('../../consts/auth/RoleType');
 const jwt = require('jsonwebtoken');
 const AuthUtil = require('../../utils/auth/AuthUtil');
@@ -27,7 +27,7 @@ const userRepository = new UserRepository();
 const createErrorLoginResult = (message) => {
     const response = new LoginResponseDto();
     response.isSucceed = false;
-    response.messageType = AuthMessageType.ERROR;
+    response.messageType = MessageType.ERROR;
     response.message = message;
 
     return response;
@@ -68,7 +68,7 @@ const createSucceedLoginResult = (user) => {
 const createErrorRefreshTokenResult = (message) => {
     const response = new RefreshTokenResponseDto();
     response.isSucceed = false;
-    response.messageType = AuthMessageType.ERROR;
+    response.messageType = MessageType.ERROR;
     response.message = message;
 
     return response;

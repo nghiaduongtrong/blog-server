@@ -10,7 +10,7 @@ class AuthUtil {
         let result = false;
         const roles = await userRepository.getRole(id);
         for (const role of roles) {
-            if (role.title === type) {
+            if (role.slug === type) {
                 result = true;
                 break;
             }
