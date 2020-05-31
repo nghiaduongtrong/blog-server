@@ -8,14 +8,32 @@ const ManagerPostEventCenter = require('../../events/manager/post/ManagerPostEve
 const CreatePostResponseDto = require('../../dto/manager/post/CreatePostResponseDto');
 const ManagerPostMessage = require('../../consts/manager/ManagerPostMessage');
 const MessageType = require('../../consts/MessageType');
+const GetPostsQueryParamsConfigDto = require('../../dto/manager/post/GetPostsQueryParamsConfigDto');
+const CategoryRepository = require('../../repository/CategoryRepository');
+const GetPostsResponseDto = require('../../dto/manager/post/GetPostsResponseDto');
+const PostStatus = require('../../consts/PostStatus');
+const PropertyUtils = require('../../utils/PropertyUtils');
+const UserRepository = require('../../repository/UserRepository');
+const ManagerResponseConst = require('../../consts/response/ManagerResponseConst');
+const OrderConst = require('../../consts/OrderConst');
+const PostsParamsConst = require('../../consts/manager/PostsParamsConst');
+const PostViewRepository = require('../../repository/PostViewRepository');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
 const postTagRepository = new PostTagRepository();
+const categoryRepository = new CategoryRepository();
+const userRepository = new UserRepository();
+const postViewRepository = new PostViewRepository();
+
+const managerResponseConst = new ManagerResponseConst();
+const orderConst = new OrderConst();
+const postsParamsConst = new PostsParamsConst();
 
 const slugUtil = new SlugUtil();
 const managerPostEventCenter = new ManagerPostEventCenter();
 
+const propertyUtils = new PropertyUtils();
 /**
  * @returns {CreatePostResponseDto} response 
  */
@@ -39,6 +57,30 @@ const createPostErrorResult = (message) => {
     return response;
 }
 
+/**
+ * @param {String} message 
+ * @returns {GetPostsResponseDto} response 
+ */
+const getPostsErrorResult = (message) => {
+    const response = new GetPostsResponseDto();
+    response.isSucceed = false;
+    response.messageType = MessageType.ERROR;
+    response.message = message;
+
+    return response;
+}
+
+/**
+ * @param {Array} posts 
+ * @returns {GetPostsResponseDto} response 
+ */
+const getPostsSucceedResult = (posts) => {
+    const response = new GetPostsResponseDto();
+    response.isSucceed = true;
+    response.posts = posts;
+
+    return response;
+}
 class ManagerService {
     /**
      * @param {CreatePostConfigDto} config 
@@ -54,6 +96,7 @@ class ManagerService {
             post.slug = slugUtil.slug(dto.title);
             post.summary = dto.summary;
             post.content = dto.content;
+            //TODO: sửa lại đúng model (đang thiếu createdAt và updatedAt )
 
             const postCreated = await postRepository.createPost(post);
 
@@ -73,6 +116,81 @@ class ManagerService {
             const response = createPostErrorResult(ManagerPostMessage.ERROR);
             managerPostEventCenter.fireEvent(managerPostEventCenter.CREATE_POST_ERROR, response);
         }
+    }
+
+    /**
+     * @param {GetPostsQueryParamsConfigDto}  params
+     * @returns {} response 
+     */
+    getPosts = async (params = new GetPostsQueryParamsConfigDto()) => {
+        try {
+            let whereParams = {};
+            if (params.status === PostStatus.PUBLISHED) {
+                whereParams[postsParamsConst.PUBLISHED] = true;
+                whereParams[postsParamsConst.DELETED] = false;
+            }
+            if (params.status === PostStatus.DRAFT) {
+                whereParams[postsParamsConst.PUBLISHED] = false;
+                whereParams[postsParamsConst.DELETED] = false;
+            }
+            if (params.status === PostStatus.DELETE) {
+                whereParams[postsParamsConst.DELETED] = true;
+            }
+            if (params.search) {
+                whereParams[postsParamsConst.TITLE] = params.search;
+            }
+
+            const category = await categoryRepository.getCategoryBySlug(params.category);
+            if (category) {
+                whereParams[postsParamsConst.CATEGORY_ID] = category.id;
+            }
+            let order = orderConst.DESC;
+            if (params.order) {
+                order = params.order.toUpperCase();
+            }
+
+            let skip = null;
+            let limit = null;
+
+            if (params.number) {
+                limit = params.number;
+            }
+
+            if (params.number && params.page) {
+                skip = (params.page - 1) * params.number;
+            }
+
+            const posts = await postRepository.getPosts(whereParams, limit, skip, order);
+
+            const data = await Promise.all(posts.map(async post => {
+                post = propertyUtils.getProperties(post, managerResponseConst.POST_PRIMARY);
+                
+                let categories = await categoryRepository.getCategoriesOfPost(post.id);
+                categories = categories.map(category => {
+                    return propertyUtils.getProperties(category, managerResponseConst.CATEGORY_BASIC);
+                });
+
+                let author = await userRepository.getUserWritePost(post.id);
+                author = propertyUtils.getProperties(author, managerResponseConst.AUTHOR_BASIC);
+                
+                let viewCount = await postViewRepository.getViewCountOfPost(post.id);
+
+                post.categories = categories;
+                post.author = author;
+                post.viewCount = viewCount;
+                
+                return post;
+            }));
+             
+            const response = getPostsSucceedResult(data);
+            managerPostEventCenter.fireEvent(managerPostEventCenter.GET_POSTS_SUCCEED, response);
+
+        } catch (err) {
+            console.log(err);
+            const response = getPostsErrorResult(ManagerPostMessage.ERROR);
+            managerPostEventCenter.fireEvent(managerPostEventCenter.GET_POSTS_ERROR, response);
+        }
+
     }
 }
 

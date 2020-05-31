@@ -26,8 +26,8 @@ class UserRepository {
      */
     getRole = (id) => {
         return new Promise((resolve, reject) => {
-            let sql = 'SELECT role.* FROM ?? INNER JOIN ?? ON ?? = ?? WHERE ?? = ?';
-            const inserts = ['user', 'role', 'user.roleId', 'role.id', 'user.id', id];
+            let sql = 'SELECT ?? FROM ?? INNER JOIN ?? ON ?? = ?? WHERE ?? = ?';
+            const inserts = ['role.*', 'user', 'role', 'user.roleId', 'role.id', 'user.id', id];
             sql = mysql.format(sql, inserts);
             connection.query(sql, (err, results, fields) => {
                 if (err) {
@@ -46,6 +46,24 @@ class UserRepository {
         return new Promise((resolve, reject) => {
             let sql = 'SELECT * FROM ?? WHERE ?? = ? LIMIT 1';
             const inserts = ['user', 'id', id];
+            sql = mysql.format(sql, inserts);
+            connection.query(sql, (err, results, fields) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(results[0]);
+            });
+        });
+    }
+
+    /**
+     * @param {Number} postId
+     * @returns {Object} user
+     */
+    getUserWritePost = (postId) => {
+        return new Promise((resolve, reject) => {
+            let sql = 'SELECT ?? FROM ?? INNER JOIN ?? ON ?? = ?? WHERE ?? = ? LIMIT 1';
+            const inserts = ['user.*','user', 'post', 'user.id', 'post.authorId', 'post.id', postId];
             sql = mysql.format(sql, inserts);
             connection.query(sql, (err, results, fields) => {
                 if (err) {
