@@ -4,7 +4,7 @@ const CreatePostConfigDto = require('../../dto/manager/post/CreatePostConfigDto'
 const ManagerService = require('../../services/manager/ManagerService');
 const ManagerPostEventCenter = require('../../events/manager/post/ManagerPostEventCenter');
 const CreatePostResponseDto = require('../../dto/manager/post/CreatePostResponseDto');
-
+const GetPostsQueryParamsConfigDto = require('../../dto/manager/post/GetPostsQueryParamsConfigDto');
 
 const managerService = new ManagerService();
 const managerPostEventCenter = new ManagerPostEventCenter();
@@ -38,6 +38,34 @@ managerRoute.post('/posts', authenticate, (req, res) => {
     managerPostEventCenter.addListener(managerPostEventCenter.CREATE_POST_SUCCEED, createPostSucceed);
     managerPostEventCenter.addListener(managerPostEventCenter.CREATE_POST_ERROR, createPostError);
     managerService.createPost(dto);
+});
+
+/** get posts
+ * [GET] api/manager/posts
+ * @returns {} response
+ */
+managerRoute.get('/posts', (req, res) => {
+    const queryParams = req.query;
+    const params = new GetPostsQueryParamsConfigDto();
+    params.search = queryParams.search;
+    params.status = queryParams.status;
+    params.category = queryParams.category;
+    params.order = queryParams.order;
+    params.number = queryParams.number;
+    params.page = queryParams.page;
+
+    const getPostsSucceed = (response) => {
+        res.json(response);
+    }
+
+    const getPostsError = (response) => {
+        res.json(response);
+    }
+
+    managerPostEventCenter.addListener(managerPostEventCenter.GET_POSTS_SUCCEED, getPostsSucceed);
+    managerPostEventCenter.addListener(managerPostEventCenter.GET_POSTS_ERROR, getPostsError);
+    
+    managerService.getPosts(params);
 });
 
 module.exports = managerRoute;
