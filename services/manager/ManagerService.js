@@ -4,7 +4,7 @@ const PostTagRepository = require('../../repository/PostTagRepository');
 const CreatePostConfigDto = require('../../dto/manager/post/CreatePostConfigDto');
 const Post = require('../../models/Post');
 const SlugUtil = require('../../utils/slug/SlugUtil');
-const ManagerPostEventCenter = require('../../events/manager/post/ManagerPostEventCenter');
+const ManagerEventCenter = require('../../events/manager/ManagerEventCenter');
 const CreatePostResponseDto = require('../../dto/manager/post/CreatePostResponseDto');
 const ManagerPostMessage = require('../../consts/manager/ManagerPostMessage');
 const MessageType = require('../../consts/MessageType');
@@ -18,6 +18,8 @@ const ManagerResponseConst = require('../../consts/response/ManagerResponseConst
 const OrderConst = require('../../consts/OrderConst');
 const PostsParamsConst = require('../../consts/manager/PostsParamsConst');
 const PostViewRepository = require('../../repository/PostViewRepository');
+const GetPostDetailConfigDto = require('../../dto/manager/post/GetPostDetailConfigDto');
+const GetPostDetailResponseDto = require('../../dto/manager/post/GetPostDetailResponseDto');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -31,7 +33,7 @@ const orderConst = new OrderConst();
 const postsParamsConst = new PostsParamsConst();
 
 const slugUtil = new SlugUtil();
-const managerPostEventCenter = new ManagerPostEventCenter();
+const managerEventCenter = new ManagerEventCenter();
 
 const propertyUtils = new PropertyUtils();
 /**
@@ -66,6 +68,7 @@ const getPostsErrorResult = (message) => {
     response.isSucceed = false;
     response.messageType = MessageType.ERROR;
     response.message = message;
+    response.posts = null;
 
     return response;
 }
@@ -81,9 +84,35 @@ const getPostsSucceedResult = (posts) => {
 
     return response;
 }
+
+/**
+ * @param {Object} post
+ * @returns {GetPostDetailResponseDto} response 
+ */
+const getPostDetailSucceedResult = (post) => {
+    let response = new GetPostDetailResponseDto();
+    response.isSucceed = true;
+    response.post = post;
+
+    return response;
+}
+
+/**
+ * @param {String} message
+ * @returns {GetPostDetailResponseDto} response 
+ */
+const getPostDetailErrorResult = (message) => {
+    let response = new GetPostDetailResponseDto();
+    response.isSucceed = false;
+    response.messageType = MessageType.ERROR;
+    response.message = message;
+    response.post = null;
+
+    return response;
+}   
 class ManagerService {
     /**
-     * @param {CreatePostConfigDto} config 
+     * @param {CreatePostConfigDto} dto 
      * @returns {CreatePostResponseDto} response 
      */
     createPost = async (dto = new CreatePostConfigDto()) => {
@@ -109,12 +138,12 @@ class ManagerService {
             }));
 
             const response = createPostSucceedResult();
-            managerPostEventCenter.fireEvent(managerPostEventCenter.CREATE_POST_SUCCEED, response);
+            managerEventCenter.fireEvent(managerEventCenter.CREATE_POST_SUCCEED, response);
 
         } catch (err) {
             console.log(err);
             const response = createPostErrorResult(ManagerPostMessage.ERROR);
-            managerPostEventCenter.fireEvent(managerPostEventCenter.CREATE_POST_ERROR, response);
+            managerEventCenter.fireEvent(managerEventCenter.CREATE_POST_ERROR, response);
         }
     }
 
@@ -197,14 +226,50 @@ class ManagerService {
             }));
              
             const response = getPostsSucceedResult(data);
-            managerPostEventCenter.fireEvent(managerPostEventCenter.GET_POSTS_SUCCEED, response);
+            managerEventCenter.fireEvent(managerEventCenter.GET_POSTS_SUCCEED, response);
 
         } catch (err) {
             console.log(err);
             const response = getPostsErrorResult(ManagerPostMessage.ERROR);
-            managerPostEventCenter.fireEvent(managerPostEventCenter.GET_POSTS_ERROR, response);
+            managerEventCenter.fireEvent(managerEventCenter.GET_POSTS_ERROR, response);
         }
 
+    }
+
+    /**
+     * @param {GetPostDetailConfigDto}  dto
+     * @returns {} response 
+     */
+    getPostDetail = async (dto = new GetPostDetailConfigDto()) => {
+        try {
+            let post = await postRepository.getPost(dto.postId);
+            if (!post) {
+                const response = getPostDetailErrorResult(ManagerPostMessage.POST_IS_EMPTY);
+                managerEventCenter.fireEvent(managerEventCenter.GET_POST_DETAIL_ERROR, response);
+                return;
+            }
+
+            let categories = await categoryRepository.getCategoriesOfPost(post.id);
+            categories = categories.map(category => {
+                return propertyUtils.getProperties(category, managerResponseConst.CATEGORY_BASIC);
+            });
+
+            let author = await userRepository.getUserWritePost(post.id);
+            author = propertyUtils.getProperties(author, managerResponseConst.AUTHOR_BASIC);
+
+            let viewCount = await postViewRepository.getViewCountOfPost(post.id);
+
+            post.categories = categories;
+            post.author = author;
+            post.viewCount = viewCount;
+
+            const response = getPostDetailSucceedResult(post);
+            managerEventCenter.fireEvent(managerEventCenter.GET_POST_DETAIL_SUCCEED, response);
+        } catch (err) {
+            console.log(err);
+            const response = getPostDetailErrorResult(ManagerPostMessage.ERROR);
+            managerEventCenter.fireEvent(managerEventCenter.GET_POST_DETAIL_ERROR, response);
+        }
     }
 }
 
