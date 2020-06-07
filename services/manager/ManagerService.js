@@ -124,26 +124,35 @@ class ManagerService {
      */
     getPosts = async (params = new GetPostsQueryParamsConfigDto()) => {
         try {
-            let whereParams = {};
-            if (params.status === PostStatus.PUBLISHED) {
-                whereParams[postsParamsConst.PUBLISHED] = true;
-                whereParams[postsParamsConst.DELETED] = false;
-            }
-            if (params.status === PostStatus.DRAFT) {
-                whereParams[postsParamsConst.PUBLISHED] = false;
-                whereParams[postsParamsConst.DELETED] = false;
-            }
-            if (params.status === PostStatus.DELETE) {
-                whereParams[postsParamsConst.DELETED] = true;
-            }
-            if (params.search) {
-                whereParams[postsParamsConst.TITLE] = params.search;
+            let options = [];
+            if(Array.isArray(params.status)) {
+                options = await Promise.all(params.status.map(async status => {
+                    let optionParams = {};
+                    if (status === PostStatus.PUBLISHED) {
+                        optionParams[postsParamsConst.PUBLISHED] = true;
+                        optionParams[postsParamsConst.DELETED] = false;
+                    }
+                    if (status === PostStatus.DRAFT) {
+                        optionParams[postsParamsConst.PUBLISHED] = false;
+                        optionParams[postsParamsConst.DELETED] = false;
+                    }
+                    if (status === PostStatus.DELETE) {
+                        optionParams[postsParamsConst.DELETED] = true;
+                    }
+                    // TODO: => search full text
+                    if (params.search) {
+                        optionParams[postsParamsConst.TITLE] = params.search;
+                    }
+        
+                    const category = await categoryRepository.getCategoryBySlug(params.category);
+                    if (category) {
+                        optionParams[postsParamsConst.CATEGORY_ID] = category.id;
+                    }
+
+                    return optionParams;
+                }));
             }
 
-            const category = await categoryRepository.getCategoryBySlug(params.category);
-            if (category) {
-                whereParams[postsParamsConst.CATEGORY_ID] = category.id;
-            }
             let order = orderConst.DESC;
             if (params.order) {
                 order = params.order.toUpperCase();
@@ -160,7 +169,12 @@ class ManagerService {
                 skip = (params.page - 1) * params.number;
             }
 
-            const posts = await postRepository.getPosts(whereParams, limit, skip, order);
+            let posts = [];
+            await Promise.all(options.map(async option => {
+                const postResults = await postRepository.getPosts(option, limit, skip, order);
+                posts = posts.concat(postResults);
+            }));
+
 
             const data = await Promise.all(posts.map(async post => {
                 post = propertyUtils.getProperties(post, managerResponseConst.POST_PRIMARY);
