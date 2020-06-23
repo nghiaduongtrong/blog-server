@@ -20,6 +20,7 @@ const PostsParamsConst = require('../../consts/manager/PostsParamsConst');
 const PostViewRepository = require('../../repository/PostViewRepository');
 const GetPostDetailConfigDto = require('../../dto/manager/post/GetPostDetailConfigDto');
 const GetPostDetailResponseDto = require('../../dto/manager/post/GetPostDetailResponseDto');
+const TagRepository = require('../../repository/TagRepository');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -27,6 +28,7 @@ const postTagRepository = new PostTagRepository();
 const categoryRepository = new CategoryRepository();
 const userRepository = new UserRepository();
 const postViewRepository = new PostViewRepository();
+const tagRepository = new TagRepository();
 
 const managerResponseConst = new ManagerResponseConst();
 const orderConst = new OrderConst();
@@ -262,6 +264,17 @@ class ManagerService {
             post.categories = categories;
             post.author = author;
             post.viewCount = viewCount;
+
+            const postTags = await postTagRepository.getPostTagsByPostId(dto.postId);
+            let tags = [];
+            await Promise.all(postTags.map(async postTag => {
+                const tag = await tagRepository.getTag(postTag.tagId);
+                if (tag) {
+                    tags.push(tag);
+                }
+            }));
+
+            post.tags = tags;
 
             const response = getPostDetailSucceedResult(post);
             managerEventCenter.fireEvent(managerEventCenter.GET_POST_DETAIL_SUCCEED, response);
