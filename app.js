@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const cookieParser = require('cookie-parser');
-const api = require('./api');
+const api = require('./src/api');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
