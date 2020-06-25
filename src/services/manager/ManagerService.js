@@ -6,7 +6,7 @@ const Post = require('../../models/Post');
 const SlugUtil = require('../../utils/slug/SlugUtil');
 const ManagerEventCenter = require('../../events/manager/ManagerEventCenter');
 const CreatePostResponseDto = require('../../dto/manager/post/CreatePostResponseDto');
-const ManagerPostMessage = require('../../consts/manager/ManagerPostMessage');
+const ManagerPostMessage = require('../../messages/manager/post/ManagerPostMessage');
 const MessageType = require('../../consts/MessageType');
 const GetPostsQueryParamsConfigDto = require('../../dto/manager/post/GetPostsQueryParamsConfigDto');
 const CategoryRepository = require('../../repository/CategoryRepository');
@@ -21,6 +21,11 @@ const PostViewRepository = require('../../repository/PostViewRepository');
 const GetPostDetailConfigDto = require('../../dto/manager/post/GetPostDetailConfigDto');
 const GetPostDetailResponseDto = require('../../dto/manager/post/GetPostDetailResponseDto');
 const TagRepository = require('../../repository/TagRepository');
+const CreateCategoryConfigDto = require('../../dto/manager/category/CreateCategoryConfigDto');
+const Category = require('../../models/Category');
+const CreateCategoryResponseDto = require('../../dto/manager/category/CreateCategoryResponseDto');
+const ManagerMessageCommon = require('../../messages/manager/ManagerMessageCommon');
+const DateUtils = require('../../utils/DateUtils');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -38,81 +43,12 @@ const slugUtil = new SlugUtil();
 const managerEventCenter = new ManagerEventCenter();
 
 const propertyUtils = new PropertyUtils();
-/**
- * @returns {CreatePostResponseDto} response 
- */
-const createPostSucceedResult = () => {
-    const response = new CreatePostResponseDto();
-    response.isSucceed = true;
+const dateUtils = new DateUtils();
 
-    return response;
-}
-
-/**
- * @param {String} message 
- * @returns {CreatePostResponseDto} response 
- */
-const createPostErrorResult = (message) => {
-    const response = new CreatePostResponseDto();
-    response.isSucceed = false;
-    response.messageType = MessageType.ERROR;
-    response.message = message;
-
-    return response;
-}
-
-/**
- * @param {String} message 
- * @returns {GetPostsResponseDto} response 
- */
-const getPostsErrorResult = (message) => {
-    const response = new GetPostsResponseDto();
-    response.isSucceed = false;
-    response.messageType = MessageType.ERROR;
-    response.message = message;
-    response.posts = null;
-
-    return response;
-}
-
-/**
- * @param {Array} posts 
- * @returns {GetPostsResponseDto} response 
- */
-const getPostsSucceedResult = (posts) => {
-    const response = new GetPostsResponseDto();
-    response.isSucceed = true;
-    response.posts = posts;
-
-    return response;
-}
-
-/**
- * @param {Object} post
- * @returns {GetPostDetailResponseDto} response 
- */
-const getPostDetailSucceedResult = (post) => {
-    let response = new GetPostDetailResponseDto();
-    response.isSucceed = true;
-    response.post = post;
-
-    return response;
-}
-
-/**
- * @param {String} message
- * @returns {GetPostDetailResponseDto} response 
- */
-const getPostDetailErrorResult = (message) => {
-    let response = new GetPostDetailResponseDto();
-    response.isSucceed = false;
-    response.messageType = MessageType.ERROR;
-    response.message = message;
-    response.post = null;
-
-    return response;
-}   
 class ManagerService {
+
+    /* ======================================================================= POST ======================================================================= */
+
     /**
      * @param {CreatePostConfigDto} dto 
      * @returns {CreatePostResponseDto} response 
@@ -127,7 +63,7 @@ class ManagerService {
             post.slug = slugUtil.slug(dto.title);
             post.summary = dto.summary;
             post.content = dto.content;
-            //TODO: sửa lại đúng model (đang thiếu createdAt và updatedAt )
+            post.createdAt = dateUtils.formatyyyMMddHHmmss(Date.now());
 
             const postCreated = await postRepository.createPost(post);
 
@@ -139,12 +75,18 @@ class ManagerService {
                 postTagRepository.createPostTag(postCreated.insertId, tagId);
             }));
 
-            const response = createPostSucceedResult();
+            let response = new CreatePostResponseDto();
+            response.isSucceed = true;
+
             managerEventCenter.fireEvent(managerEventCenter.CREATE_POST_SUCCEED, response);
 
         } catch (err) {
             console.log(err);
-            const response = createPostErrorResult(ManagerPostMessage.ERROR);
+            let response = new CreatePostResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.message = ManagerMessageCommon.ERROR;
+
             managerEventCenter.fireEvent(managerEventCenter.CREATE_POST_ERROR, response);
         }
     }
@@ -227,12 +169,20 @@ class ManagerService {
                 return post;
             }));
              
-            const response = getPostsSucceedResult(data);
+            let response = new GetPostsResponseDto();
+            response.isSucceed = true;
+            response.posts = data;
+
             managerEventCenter.fireEvent(managerEventCenter.GET_POSTS_SUCCEED, response);
 
         } catch (err) {
             console.log(err);
-            const response = getPostsErrorResult(ManagerPostMessage.ERROR);
+            let response = new GetPostsResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.message = ManagerMessageCommon.ERROR;
+            response.posts = null;
+
             managerEventCenter.fireEvent(managerEventCenter.GET_POSTS_ERROR, response);
         }
 
@@ -246,7 +196,12 @@ class ManagerService {
         try {
             let post = await postRepository.getPost(dto.postId);
             if (!post) {
-                const response = getPostDetailErrorResult(ManagerPostMessage.POST_IS_EMPTY);
+                let response = new GetPostDetailResponseDto();
+                response.isSucceed = false;
+                response.messageType = MessageType.ERROR;
+                response.message = ManagerPostMessage.GET_POST_DETAIL_NOT_FOUND_POST;
+                response.post = null;
+
                 managerEventCenter.fireEvent(managerEventCenter.GET_POST_DETAIL_ERROR, response);
                 return;
             }
@@ -276,12 +231,53 @@ class ManagerService {
 
             post.tags = tags;
 
-            const response = getPostDetailSucceedResult(post);
+            let response = new GetPostDetailResponseDto();
+            response.isSucceed = true;
+            response.post = post;
+
             managerEventCenter.fireEvent(managerEventCenter.GET_POST_DETAIL_SUCCEED, response);
         } catch (err) {
             console.log(err);
-            const response = getPostDetailErrorResult(ManagerPostMessage.ERROR);
+            let response = new GetPostDetailResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.message = ManagerMessageCommon.ERROR;
+            response.post = null;
+
             managerEventCenter.fireEvent(managerEventCenter.GET_POST_DETAIL_ERROR, response);
+        }
+    }
+
+
+    /* ======================================================================= CATEGORY ======================================================================= */
+    /**
+     * @param {CreateCategoryConfigDto}  dto
+     * @returns {} response 
+     */
+    createCategory = async (dto = new CreateCategoryConfigDto()) => {
+        try {
+            const category = new Category();
+            category.parentId = dto.parentId;
+            category.title = dto.title;
+            category.description = dto.description;
+            category.createdAt = dateUtils.formatyyyMMddHHmmss(dto.createdAt);
+            category.slug = slugUtil.slug(dto.title);
+
+            const isCategoryCreated = await categoryRepository.createCategory(category);
+            if (isCategoryCreated) {
+                const response = new CreateCategoryResponseDto();
+                response.isSucceed = true;
+                managerEventCenter.fireEvent(managerEventCenter.CREATE_CATEGORY_SUCCEED, response);
+            } else {
+                throw new Error();
+            }
+        } catch (err) {
+            console.log(err);
+            let response = new CreateCategoryResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.message = ManagerMessageCommon.ERROR;
+            managerEventCenter.fireEvent(managerEventCenter.CREATE_CATEGORY_ERROR, response);
         }
     }
 }

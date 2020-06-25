@@ -1,3 +1,7 @@
+const DateUtils = require("../utils/DateUtils");
+
+const dateUtils = new DateUtils();
+
 /* Post model
  */
 class Post {
@@ -11,7 +15,9 @@ class Post {
     content = String();
     published = Boolean();
     deleted = Boolean();
-    publishedAt = Date();
+    publishedAt = dateUtils.formatyyyMMddHHmmss(Date.now());
+    createdAt = dateUtils.formatyyyMMddHHmmss(Date.now());
+    updatedAt = dateUtils.formatyyyMMddHHmmss(Date.now());
 
     constructor() {
         this.published = false;

@@ -9,6 +9,9 @@ class ManagerEventCenter extends BaseEvent {
 
     GET_POST_DETAIL_SUCCEED = 'getPostSucceed';
     GET_POST_DETAIL_ERROR = 'getPostError';
+
+    CREATE_CATEGORY_SUCCEED = 'createCategorySucceed';
+    CREATE_CATEGORY_ERROR = 'createCategoryError';
 }
 
 module.exports = ManagerEventCenter;
