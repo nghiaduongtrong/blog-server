@@ -38,6 +38,24 @@ class CategoryRepository {
             });
         });
     }   
+
+    /**
+     * @param {Category} category   
+     * @returns {} 
+     */
+    createCategory = (category) => {
+        return new Promise((resolve, reject) => {
+            let sql = 'INSERT INTO ?? SET ?';
+            const inserts = ['category'];
+            sql = mysql.format(sql, inserts);
+            connection.query(sql, category, (err, results, fields) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(true);
+            });
+        });
+    }
 }
 
 module.exports = CategoryRepository;

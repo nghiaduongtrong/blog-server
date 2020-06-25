@@ -42,7 +42,7 @@ class DateUtils {
 
         let date = this.convertToDate(target);
 
-        if (this.isValidDate(date)) {
+        if (!this.isValidDate(date)) {
             return target;
         }
 

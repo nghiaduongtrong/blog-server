@@ -6,6 +6,7 @@ const ManagerEventCenter = require('../../events/manager/ManagerEventCenter');
 const CreatePostResponseDto = require('../../dto/manager/post/CreatePostResponseDto');
 const GetPostsQueryParamsConfigDto = require('../../dto/manager/post/GetPostsQueryParamsConfigDto');
 const GetPostDetailConfigDto = require('../../dto/manager/post/GetPostDetailConfigDto');
+const CreateCategoryConfigDto = require('../../dto/manager/category/CreateCategoryConfigDto');
 
 const managerService = new ManagerService();
 const managerEventCenter = new ManagerEventCenter();
@@ -91,6 +92,34 @@ managerRoute.get('/posts/:postId', (req, res) => {
     managerEventCenter.addListener(managerEventCenter.GET_POST_DETAIL_SUCCEED, getPostDetailSucceed);
     managerEventCenter.addListener(managerEventCenter.GET_POST_DETAIL_ERROR, getPostDetailError);
     managerService.getPostDetail(dto);
+});
+
+/** create category
+ * [POST] api/manager/categories
+ * @returns {} response
+ */
+// TODO: authenticate
+managerRoute.post('/categories', authenticate, (req, res) => {
+    const postData = req.body;
+    const dto = new CreateCategoryConfigDto();
+    dto.parentId = postData.parentId;
+    dto.title = postData.title;
+    dto.description = postData.description;
+    dto.createdAt = Date.now();
+
+    const createCategorySucceed = (response) => {
+        res.json(response);
+    }
+    
+    const createCategoryError = (response) => {
+        res.json(response);
+    }
+
+    console.log(dto)
+    managerEventCenter.addListener(managerEventCenter.CREATE_CATEGORY_SUCCEED, createCategorySucceed);
+    managerEventCenter.addListener(managerEventCenter.CREATE_CATEGORY_ERROR, createCategoryError);
+
+    managerService.createCategory(dto);
 });
 
 module.exports = managerRoute;
