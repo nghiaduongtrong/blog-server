@@ -46,8 +46,7 @@ managerRoute.post('/posts', authenticate, (req, res) => {
  * [GET] api/manager/posts
  * @returns {} response
  */
-// TODO: authenticate
-managerRoute.get('/posts', (req, res) => {
+managerRoute.get('/posts', authenticate, (req, res) => {
     const queryParams = req.query;
     const params = new GetPostsQueryParamsConfigDto();
     params.search = queryParams.search;
@@ -75,8 +74,7 @@ managerRoute.get('/posts', (req, res) => {
  * [GET] api/manager/posts/123
  * @returns {} response
  */
-// TODO: authenticate
-managerRoute.get('/posts/:postId', (req, res) => {
+managerRoute.get('/posts/:postId', authenticate, (req, res) => {
     const params = req.params;
     const dto = new GetPostDetailConfigDto();
     dto.postId = params.postId;
@@ -98,7 +96,6 @@ managerRoute.get('/posts/:postId', (req, res) => {
  * [POST] api/manager/categories
  * @returns {} response
  */
-// TODO: authenticate
 managerRoute.post('/categories', authenticate, (req, res) => {
     const postData = req.body;
     const dto = new CreateCategoryConfigDto();
@@ -115,7 +112,6 @@ managerRoute.post('/categories', authenticate, (req, res) => {
         res.json(response);
     }
 
-    console.log(dto)
     managerEventCenter.addListener(managerEventCenter.CREATE_CATEGORY_SUCCEED, createCategorySucceed);
     managerEventCenter.addListener(managerEventCenter.CREATE_CATEGORY_ERROR, createCategoryError);
 
