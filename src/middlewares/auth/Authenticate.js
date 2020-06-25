@@ -26,10 +26,19 @@ const createErrorAuthenticate = (message) => {
  * @returns {AuthenticateResponseDto} response
  */
 const authenticate = async (req, res, next) => {
+    let token = null
     const { accessToken } = req.body;
+    const authorization = req.headers['authorization'];
     if (accessToken) {
+        token = accessToken;
+    }
+    if (authorization) {
+        token = authorization.split(" ")[1];
+    }
+
+    if (token) {
         try {
-            const userPayload = jwt.verify(accessToken, authConfig.ACCESS_TOKEN_SECRET);
+            const userPayload = jwt.verify(token, authConfig.ACCESS_TOKEN_SECRET);
             const user = await userRepository.getUser(userPayload.id);
             if (!user) {
                 const response = createErrorAuthenticate(AuthMessage.AUTH_FAILD);
