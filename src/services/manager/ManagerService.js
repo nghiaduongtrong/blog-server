@@ -26,6 +26,8 @@ const Category = require('../../models/Category');
 const CreateCategoryResponseDto = require('../../dto/manager/category/CreateCategoryResponseDto');
 const ManagerMessageCommon = require('../../messages/manager/ManagerMessageCommon');
 const DateUtils = require('../../utils/DateUtils');
+const UpdateCategoryConfigDto = require('../../dto/manager/category/UpdateCategoryConfigDto');
+const UpdateCategoryResponseDto = require('../../dto/manager/category/UpdateCategoryResponseDto');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -260,16 +262,16 @@ class ManagerService {
             category.parentId = dto.parentId;
             category.title = dto.title;
             category.description = dto.description;
-            category.createdAt = dateUtils.formatyyyMMddHHmmss(dto.createdAt);
+            category.createdAt = dateUtils.formatyyyMMddHHmmss(Date.now());
             category.slug = slugUtil.slug(dto.title);
 
-            const isCategoryCreated = await categoryRepository.createCategory(category);
-            if (isCategoryCreated) {
+            const isCreatedCategory = await categoryRepository.createCategory(category);
+            if (isCreatedCategory) {
                 const response = new CreateCategoryResponseDto();
                 response.isSucceed = true;
                 managerEventCenter.fireEvent(managerEventCenter.CREATE_CATEGORY_SUCCEED, response);
             } else {
-                throw new Error();
+                throw new Error('Can not create category.');
             }
         } catch (err) {
             console.log(err);
@@ -278,6 +280,42 @@ class ManagerService {
             response.messageType = MessageType.ERROR;
             response.message = ManagerMessageCommon.ERROR;
             managerEventCenter.fireEvent(managerEventCenter.CREATE_CATEGORY_ERROR, response);
+        }
+    }
+
+     /**
+     * @param {UpdateCategoryConfigDto}  dto
+     * @returns {} response 
+     */
+    updateCategory = async (dto = new UpdateCategoryConfigDto()) => {
+        try {
+            let category = new Category();
+            category.parentId = dto.parentId;
+            category.title = dto.title;
+            category.description = dto.description;
+            category.slug = slugUtil.slug(dto.title);
+            category.updatedAt = dateUtils.formatyyyMMddHHmmss(Date.now());
+
+            const categoryId = dto.id;
+
+            const isUpdatedCategory = await categoryRepository.updateCategory(categoryId, category);
+
+            if (isUpdatedCategory) {
+                let response = new UpdateCategoryResponseDto();
+                response.isSucceed = true;
+
+                managerEventCenter.fireEvent(managerEventCenter.UPDATE_CATEGORY_SUCCEED, response);
+            } else {
+                throw new Error('Can not update category.');
+            }
+        } catch (err) {
+            console.log(err);
+            let response = new UpdateCategoryResponseDto();
+
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.messageType = ManagerMessageCommon.ERROR;
+            managerEventCenter.fireEvent(managerEventCenter.UPDATE_CATEGORY_ERROR, response);
         }
     }
 }
