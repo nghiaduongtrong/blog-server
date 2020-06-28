@@ -11,6 +11,7 @@ const UpdateCategoryConfigDto = require('../../dto/manager/category/UpdateCatego
 const DeleteCategoryConfigDto = require('../../dto/manager/category/DeleteCategoryConfigDto');
 const CreateTagConfigDto = require('../../dto/manager/tag/CreateTagConfigDto');
 const DeleteTagConfigDto = require('../../dto/manager/tag/DeleteTagConfigDto');
+const UpdateTagConfigDto = require('../../dto/manager/tag/UpdateTagConfigDto');
 
 const managerService = new ManagerService();
 const managerEventCenter = new ManagerEventCenter();
@@ -126,13 +127,13 @@ managerRoute.post('/categories', authenticate, (req, res) => {
  * @returns {} response
  */
 managerRoute.put('/categories', authenticate, (req, res) => {
-    const postData = req.body;
+    const putData = req.body;
     const dto = new UpdateCategoryConfigDto();
 
-    dto.id = postData.id;
-    dto.parentId = postData.parentId; 
-    dto.title = postData.title;
-    dto.description = postData.description;
+    dto.id = putData.id;
+    dto.parentId = putData.parentId; 
+    dto.title = putData.title;
+    dto.description = putData.description;
 
     const updateCategorySucceed = (response) => {
         res.json(response);
@@ -212,6 +213,30 @@ managerRoute.delete('/tags/:id', authenticate, (req, res) => {
     managerEventCenter.addListener(managerEventCenter.DELETE_TAG_SUCCEED, deleteTagSucceed);
     managerEventCenter.addListener(managerEventCenter.DELETE_TAG_ERROR, deleteTagError);
     managerService.deleteTag(dto);
+});
+
+/** update tag
+ * [PUT] api/manager/tags
+ * @returns {} response
+ */
+managerRoute.put('/tags', authenticate, (req, res) => {
+    const putData = req.body;
+    const dto = new UpdateTagConfigDto();
+    dto.id = putData.id;
+    dto.title = putData.title;
+    dto.description = putData.description;
+
+    const updateTagSucceed = (response) => {
+        res.json(response);
+    }
+
+    const updateTagError = (response) => {
+        res.json(response);
+    }
+
+    managerEventCenter.addListener(managerEventCenter.UPDATE_TAG_SUCCEED, updateTagSucceed);
+    managerEventCenter.addListener(managerEventCenter.UPDATE_TAG_ERROR, updateTagError);
+    managerService.updateTag(dto);
 });
 
 module.exports = managerRoute;
