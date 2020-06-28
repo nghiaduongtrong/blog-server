@@ -4,8 +4,8 @@ class Tag {
     metaTitle =  String();
     slug = String();
     description = String();
-    createdAt = Date();
-    updatedAt = Date();
+    createdAt = null;
+    updatedAt = null;
 }
 
 module.exports = Tag;

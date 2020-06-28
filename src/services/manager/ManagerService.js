@@ -30,7 +30,9 @@ const UpdateCategoryConfigDto = require('../../dto/manager/category/UpdateCatego
 const UpdateCategoryResponseDto = require('../../dto/manager/category/UpdateCategoryResponseDto');
 const DeleteCategoryConfigDto = require('../../dto/manager/category/DeleteCategoryConfigDto');
 const DeleteCategoryResponseDto = require('../../dto/manager/category/DeleteCategoryResponseDto');
-const e = require('express');
+const CreateTagConfigDto = require('../../dto/manager/tag/CreateTagConfigDto');
+const Tag = require('../../models/Tag');
+const CreateTagResponseDto = require('../../dto/manager/tag/CreateTagResponseDto');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -103,7 +105,7 @@ class ManagerService {
     getPosts = async (params = new GetPostsQueryParamsConfigDto()) => {
         try {
             let options = [];
-            if(Array.isArray(params.status)) {
+            if (Array.isArray(params.status)) {
                 options = await Promise.all(params.status.map(async status => {
                     let optionParams = {};
                     if (status === PostStatus.PUBLISHED) {
@@ -121,7 +123,7 @@ class ManagerService {
                     if (params.search) {
                         optionParams[postsParamsConst.TITLE] = params.search;
                     }
-        
+
                     const category = await categoryRepository.getCategoryBySlug(params.category);
                     if (category) {
                         optionParams[postsParamsConst.CATEGORY_ID] = category.id;
@@ -156,7 +158,7 @@ class ManagerService {
 
             const data = await Promise.all(posts.map(async post => {
                 post = propertyUtils.getProperties(post, managerResponseConst.POST_PRIMARY);
-                
+
                 let categories = await categoryRepository.getCategoriesOfPost(post.id);
                 categories = categories.map(category => {
                     return propertyUtils.getProperties(category, managerResponseConst.CATEGORY_BASIC);
@@ -164,16 +166,16 @@ class ManagerService {
 
                 let author = await userRepository.getUserWritePost(post.id);
                 author = propertyUtils.getProperties(author, managerResponseConst.AUTHOR_BASIC);
-                
+
                 let viewCount = await postViewRepository.getViewCountOfPost(post.id);
 
                 post.categories = categories;
                 post.author = author;
                 post.viewCount = viewCount;
-                
+
                 return post;
             }));
-             
+
             let response = new GetPostsResponseDto();
             response.isSucceed = true;
             response.posts = data;
@@ -331,7 +333,7 @@ class ManagerService {
             const categoryId = dto.id;
 
             const isDeleted = await categoryRepository.deleteCategory(categoryId);
-            if(isDeleted) {
+            if (isDeleted) {
                 let response = new DeleteCategoryResponseDto();
                 response.isSucceed = true;
                 managerEventCenter.fireEvent(managerEventCenter.DELETE_CATEGORY_SUCCEED, response);
@@ -345,6 +347,38 @@ class ManagerService {
             response.messageType = MessageType.ERROR;
             response.message = ManagerMessageCommon.ERROR;
             managerEventCenter.fireEvent(managerEventCenter.DELETE_CATEGORY_ERROR, response);
+        }
+    }
+
+    /* ======================================================================= TAG ======================================================================= */
+
+    /**
+    * @param {CreateTagConfigDto}  dto
+    * @returns {} response 
+    */
+    createTag = async (dto = new CreateTagConfigDto()) => {
+        try {
+            const tag = new Tag();
+            tag.title = dto.title;
+            tag.description = dto.description;
+            tag.slug = slugUtil.slug(dto.title);
+            tag.createdAt = dateUtils.formatyyyMMddHHmmss(Date.now());
+
+            const isCreated = await tagRepository.createTag(tag);
+            if (isCreated) {
+                let response = new CreateTagResponseDto();
+                response.isSucceed = true;
+                managerEventCenter.fireEvent(managerEventCenter.CREATE_TAG_SUCCEED, response);
+            } else {
+                throw new Error('Can not create tag.');
+            }
+        } catch (err) {
+            console.log(err);
+            let response = new CreateTagResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.message = ManagerMessageCommon.ERROR;
+            managerEventCenter.fireEvent(managerEventCenter.CREATE_TAG_ERROR, response);
         }
     }
 }
