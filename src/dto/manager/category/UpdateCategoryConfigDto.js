@@ -1,9 +1,10 @@
 const ManagerRequestDto = require('../ManagerRequestDto');
 
-class CreateCategoryConfigDto extends ManagerRequestDto {
+class UpdateCategoryConfigDto extends ManagerRequestDto {
+    id = Number();
     parentId = Number();
     title = String();
     description = String();
 }
 
-module.exports = CreateCategoryConfigDto;
+module.exports = UpdateCategoryConfigDto;

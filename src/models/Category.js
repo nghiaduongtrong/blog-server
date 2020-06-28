@@ -11,8 +11,8 @@ class Category {
     metaTitle =  String();
     slug = String();
     description = String();
-    createdAt = dateUtils.formatyyyMMddHHmmss(Date.now());
-    updatedAt = dateUtils.formatyyyMMddHHmmss(Date.now());
+    createdAt = null;
+    updatedAt = null;
 }
 
 module.exports = Category;

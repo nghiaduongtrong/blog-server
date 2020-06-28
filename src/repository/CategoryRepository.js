@@ -1,6 +1,8 @@
 const connection = require('../connection');
 const mysql = require('mysql');
+const QueryUtils = require('./utils/QueryUtils');
 
+const queryUtils = new QueryUtils();
 class CategoryRepository {
 
     /**
@@ -37,7 +39,7 @@ class CategoryRepository {
                 resolve(results);
             });
         });
-    }   
+    }
 
     /**
      * @param {Category} category   
@@ -49,6 +51,28 @@ class CategoryRepository {
             const inserts = ['category'];
             sql = mysql.format(sql, inserts);
             connection.query(sql, category, (err, results, fields) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(true);
+            });
+        });
+    }
+
+    /**
+     * @param {Number} categoryId   
+     * @param {Category} categoryDataUpdate   
+     * @returns {Boolean} 
+     */
+    updateCategory = (categoryId, categoryDataUpdate) => {
+        return new Promise((resolve, reject) => {
+            const sql = queryUtils.createUpdateQuery('category', categoryDataUpdate, {
+                where: {
+                    id: categoryId
+                }
+            });
+
+            connection.query(sql, (err, results, fields) => {
                 if (err) {
                     return reject(err);
                 }
