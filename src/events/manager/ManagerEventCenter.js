@@ -21,6 +21,9 @@ class ManagerEventCenter extends BaseEvent {
     
     CREATE_TAG_SUCCEED = 'createTagSucceed';
     CREATE_TAG_ERROR = 'createTagError';
+
+    DELETE_TAG_SUCCEED = 'deleteTagSucceed';
+    DELETE_TAG_ERROR = 'deleteTagError';
 }
 
 module.exports = ManagerEventCenter;
