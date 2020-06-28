@@ -28,6 +28,9 @@ const ManagerMessageCommon = require('../../messages/manager/ManagerMessageCommo
 const DateUtils = require('../../utils/DateUtils');
 const UpdateCategoryConfigDto = require('../../dto/manager/category/UpdateCategoryConfigDto');
 const UpdateCategoryResponseDto = require('../../dto/manager/category/UpdateCategoryResponseDto');
+const DeleteCategoryConfigDto = require('../../dto/manager/category/DeleteCategoryConfigDto');
+const DeleteCategoryResponseDto = require('../../dto/manager/category/DeleteCategoryResponseDto');
+const e = require('express');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -283,10 +286,10 @@ class ManagerService {
         }
     }
 
-     /**
-     * @param {UpdateCategoryConfigDto}  dto
-     * @returns {} response 
-     */
+    /**
+    * @param {UpdateCategoryConfigDto}  dto
+    * @returns {} response 
+    */
     updateCategory = async (dto = new UpdateCategoryConfigDto()) => {
         try {
             let category = new Category();
@@ -316,6 +319,32 @@ class ManagerService {
             response.messageType = MessageType.ERROR;
             response.messageType = ManagerMessageCommon.ERROR;
             managerEventCenter.fireEvent(managerEventCenter.UPDATE_CATEGORY_ERROR, response);
+        }
+    }
+
+    /**
+    * @param {DeleteCategoryConfigDto}  dto
+    * @returns {} response 
+    */
+    deleteCategory = async (dto = new DeleteCategoryConfigDto()) => {
+        try {
+            const categoryId = dto.id;
+
+            const isDeleted = await categoryRepository.deleteCategory(categoryId);
+            if(isDeleted) {
+                let response = new DeleteCategoryResponseDto();
+                response.isSucceed = true;
+                managerEventCenter.fireEvent(managerEventCenter.DELETE_CATEGORY_SUCCEED, response);
+            } else {
+                throw new Error('Can not delete category.');
+            }
+        } catch (err) {
+            console.log(err);
+            let response = new DeleteCategoryResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.message = ManagerMessageCommon.ERROR;
+            managerEventCenter.fireEvent(managerEventCenter.DELETE_CATEGORY_ERROR, response);
         }
     }
 }

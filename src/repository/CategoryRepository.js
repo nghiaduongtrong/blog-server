@@ -80,6 +80,24 @@ class CategoryRepository {
             });
         });
     }
+
+    /**
+     * @param {Number} categoryId   
+     * @returns {Boolean} 
+     */
+    deleteCategory = (categoryId) => {
+        return new Promise((resolve, reject) => {
+            let sql = 'DELETE FROM ?? WHERE ?? = ?';
+            const inserts = ['category', 'id', categoryId];
+            sql = mysql.format(sql, inserts);
+            connection.query(sql, (err, results, fields) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(true);
+            });
+        });
+    }
 }
 
 module.exports = CategoryRepository;
