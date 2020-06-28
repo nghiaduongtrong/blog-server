@@ -35,6 +35,8 @@ const Tag = require('../../models/Tag');
 const CreateTagResponseDto = require('../../dto/manager/tag/CreateTagResponseDto');
 const DeleteTagConfigDto = require('../../dto/manager/tag/DeleteTagConfigDto');
 const DeleteTagResponseDto = require('../../dto/manager/tag/DeleteTagResponseDto');
+const UpdateTagConfigDto = require('../../dto/manager/tag/UpdateTagConfigDto');
+const UpdateTagResponseDto = require('../../dto/manager/tag/UpdateTagResponseDto');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -296,7 +298,7 @@ class ManagerService {
     */
     updateCategory = async (dto = new UpdateCategoryConfigDto()) => {
         try {
-            let category = new Category();
+            const category = new Category();
             category.parentId = dto.parentId;
             category.title = dto.title;
             category.description = dto.description;
@@ -407,6 +409,38 @@ class ManagerService {
             response.messageType = MessageType.ERROR;
             response.message = ManagerMessageCommon.ERROR;
             managerEventCenter.fireEvent(managerEventCenter.DELETE_TAG_ERROR, response);
+        }
+    }
+
+    /**
+    * @param {UpdateTagConfigDto}  dto
+    * @returns {} response 
+    */
+    updateTag = async (dto = new UpdateTagConfigDto()) => {
+        try {
+            const tag = new Tag();
+            tag.title = dto.title;
+            tag.description = dto.description;
+            tag.slug = slugUtil.slug(dto.title);
+            tag.updatedAt = dateUtils.formatyyyMMddHHmmss(Date.now());
+
+            const tagId = dto.id;
+
+            const isUpdated = await tagRepository.updateTag(tagId, tag);
+            if (isUpdated) {
+                let response = new UpdateTagResponseDto();
+                response.isSucceed = true;
+                managerEventCenter.fireEvent(managerEventCenter.UPDATE_TAG_SUCCEED, response);
+            } else {
+                throw new Error('Can not update tag.');
+            }
+        } catch (err) {
+            console.log(err);
+            let response = new UpdateTagResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.messageType = ManagerMessageCommon.ERROR;
+            managerEventCenter.fireEvent(managerEventCenter.UPDATE_TAG_ERROR, response);
         }
     }
 }

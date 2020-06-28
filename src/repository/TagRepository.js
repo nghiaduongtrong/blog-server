@@ -1,6 +1,8 @@
 const connection = require('../connection');
 const mysql = require('mysql');
+const QueryUtils = require('./utils/QueryUtils');
 
+const queryUtils = new QueryUtils();
 class TagRepository {
     /**
      * @param {Number} tagId
@@ -47,6 +49,28 @@ class TagRepository {
             let sql = 'DELETE FROM ?? WHERE ?? = ?';
             const inserts = ['tag', 'id', tagId];
             sql = mysql.format(sql, inserts);
+            connection.query(sql, (err, results, fields) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(true);
+            });
+        });
+    }
+
+    /**
+     * @param {Number} tagId
+     * @param {Object} tagDataUpdate
+     * @returns {Boolean} 
+     */
+    updateTag = (tagId, tagDataUpdate) => {
+        return new Promise((resolve, reject) => {
+            const sql = queryUtils.createUpdateQuery('tag', tagDataUpdate, {
+                where: {
+                    id: tagId
+                }
+            });
+
             connection.query(sql, (err, results, fields) => {
                 if (err) {
                     return reject(err);
