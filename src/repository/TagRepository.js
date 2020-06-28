@@ -19,6 +19,24 @@ class TagRepository {
             }); 
         });
     }
+
+    /**
+     * @param {Object} tag
+     * @returns {} 
+     */
+    createTag = (tag) => {
+        return new Promise((resolve, reject) => {
+            let sql = 'INSERT INTO ?? SET ?';
+            const inserts = ['tag'];
+            sql = mysql.format(sql, inserts);
+            connection.query(sql, tag, (err, results, fields) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(true);
+            });
+        });
+    }
 }
 
 module.exports = TagRepository;

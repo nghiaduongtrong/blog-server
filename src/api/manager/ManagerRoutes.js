@@ -9,6 +9,7 @@ const GetPostDetailConfigDto = require('../../dto/manager/post/GetPostDetailConf
 const CreateCategoryConfigDto = require('../../dto/manager/category/CreateCategoryConfigDto');
 const UpdateCategoryConfigDto = require('../../dto/manager/category/UpdateCategoryConfigDto');
 const DeleteCategoryConfigDto = require('../../dto/manager/category/DeleteCategoryConfigDto');
+const CreateTagConfigDto = require('../../dto/manager/tag/CreateTagConfigDto');
 
 const managerService = new ManagerService();
 const managerEventCenter = new ManagerEventCenter();
@@ -165,6 +166,29 @@ managerRoute.delete('/categories/:id', authenticate, (req, res) => {
     managerEventCenter.addListener(managerEventCenter.DELETE_CATEGORY_SUCCEED, deleteCategorySucceed);
     managerEventCenter.addListener(managerEventCenter.DELETE_CATEGORY_ERROR, deleteCategoryError);
     managerService.deleteCategory(dto);
+});
+
+/** create tag
+ * [POST] api/manager/tags
+ * @returns {} response
+ */
+managerRoute.post('/tags', authenticate, (req, res) => {
+    const postData = req.body;
+    const dto = new CreateTagConfigDto();
+    dto.title = postData.title;
+    dto.description = postData.description;
+
+    const createTagSucceed = (response) => {
+        res.json(response);
+    }
+
+    const createTagError = (response) => {
+        res.json(response);
+    }
+
+    managerEventCenter.addListener(managerEventCenter.CREATE_TAG_SUCCEED, createTagSucceed);
+    managerEventCenter.addListener(managerEventCenter.CREATE_TAG_ERROR, createTagError);
+    managerService.createTag(dto);
 });
 
 module.exports = managerRoute;
