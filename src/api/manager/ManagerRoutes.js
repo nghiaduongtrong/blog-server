@@ -8,6 +8,7 @@ const GetPostsQueryParamsConfigDto = require('../../dto/manager/post/GetPostsQue
 const GetPostDetailConfigDto = require('../../dto/manager/post/GetPostDetailConfigDto');
 const CreateCategoryConfigDto = require('../../dto/manager/category/CreateCategoryConfigDto');
 const UpdateCategoryConfigDto = require('../../dto/manager/category/UpdateCategoryConfigDto');
+const DeleteCategoryConfigDto = require('../../dto/manager/category/DeleteCategoryConfigDto');
 
 const managerService = new ManagerService();
 const managerEventCenter = new ManagerEventCenter();
@@ -122,7 +123,7 @@ managerRoute.post('/categories', authenticate, (req, res) => {
  * [PUT] api/manager/categories
  * @returns {} response
  */
-managerRoute.put('/categories', (req, res) => {
+managerRoute.put('/categories', authenticate, (req, res) => {
     const postData = req.body;
     const dto = new UpdateCategoryConfigDto();
 
@@ -142,6 +143,28 @@ managerRoute.put('/categories', (req, res) => {
     managerEventCenter.addListener(managerEventCenter.UPDATE_CATEGORY_SUCCEED, updateCategorySucceed);
     managerEventCenter.addListener(managerEventCenter.UPDATE_CATEGORY_ERROR, updateCategoryError);
     managerService.updateCategory(dto);
+});
+
+/** update category
+ * [DELETE] api/manager/categories/:id
+ * @returns {} response
+ */
+managerRoute.delete('/categories/:id', authenticate, (req, res) => {
+    const categoryId = req.params.id;
+    const dto = new DeleteCategoryConfigDto();
+    dto.id = categoryId;
+
+    const deleteCategorySucceed = (response) => {
+        res.json(response);
+    }
+
+    const deleteCategoryError = (response) => {
+        res.json(response);
+    }
+
+    managerEventCenter.addListener(managerEventCenter.DELETE_CATEGORY_SUCCEED, deleteCategorySucceed);
+    managerEventCenter.addListener(managerEventCenter.DELETE_CATEGORY_ERROR, deleteCategoryError);
+    managerService.deleteCategory(dto);
 });
 
 module.exports = managerRoute;
