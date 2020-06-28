@@ -33,6 +33,8 @@ const DeleteCategoryResponseDto = require('../../dto/manager/category/DeleteCate
 const CreateTagConfigDto = require('../../dto/manager/tag/CreateTagConfigDto');
 const Tag = require('../../models/Tag');
 const CreateTagResponseDto = require('../../dto/manager/tag/CreateTagResponseDto');
+const DeleteTagConfigDto = require('../../dto/manager/tag/DeleteTagConfigDto');
+const DeleteTagResponseDto = require('../../dto/manager/tag/DeleteTagResponseDto');
 
 const postRepository = new PostRepository();
 const postCategoryRepository = new PostCategoryRepository();
@@ -379,6 +381,32 @@ class ManagerService {
             response.messageType = MessageType.ERROR;
             response.message = ManagerMessageCommon.ERROR;
             managerEventCenter.fireEvent(managerEventCenter.CREATE_TAG_ERROR, response);
+        }
+    }
+
+    /**
+    * @param {DeleteTagConfigDto}  dto
+    * @returns {} response 
+    */
+    deleteTag = async (dto = new DeleteTagConfigDto()) => {
+        try {
+            const tagId = dto.id;
+
+            const isDeleted = await tagRepository.deleteTag(tagId);
+            if (isDeleted) {
+                let response = new DeleteTagResponseDto();
+                response.isSucceed = true;
+                managerEventCenter.fireEvent(managerEventCenter.DELETE_TAG_SUCCEED, response);
+            } else {
+                throw new Error('Can not delete tag.');
+            }
+        } catch (err) {
+            console.log(err);
+            let response = new DeleteTagResponseDto();
+            response.isSucceed = false;
+            response.messageType = MessageType.ERROR;
+            response.message = ManagerMessageCommon.ERROR;
+            managerEventCenter.fireEvent(managerEventCenter.DELETE_TAG_ERROR, response);
         }
     }
 }
